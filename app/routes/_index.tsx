@@ -1,48 +1,37 @@
-import type { MetaFunction } from "@remix-run/node";
+import { LoaderFunctionArgs, json } from "@remix-run/node";
+import { Form, useLoaderData } from "@remix-run/react";
+import { commitSession, getSession } from "~/session.server";
+import { redirectWithSuccess } from "~/toast.server";
 
-export const meta: MetaFunction = () => {
-  return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
-  ];
-};
+export async function loader({ request }: LoaderFunctionArgs) {
+  const session = await getSession(request.headers.get("Cookie"));
+
+  session.set("previousData", "This was set in home route");
+
+  return json(session.data, {
+    headers: { "Set-Cookie": await commitSession(session) },
+  });
+}
+
+export async function action() {
+  return redirectWithSuccess("/next", { message: "This is a toast" });
+}
 
 export default function Index() {
+  const data = useLoaderData<typeof loader>();
+
   return (
-    <div className="font-sans p-4">
-      <h1 className="text-3xl">Welcome to Remix</h1>
-      <ul className="list-disc mt-4 pl-6 space-y-2">
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/start/quickstart"
-            rel="noreferrer"
-          >
-            5m Quick Start
-          </a>
-        </li>
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/start/tutorial"
-            rel="noreferrer"
-          >
-            30m Tutorial
-          </a>
-        </li>
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/docs"
-            rel="noreferrer"
-          >
-            Remix Docs
-          </a>
-        </li>
-      </ul>
+    <div className="font-sans p-4 space-y-4">
+      <h1 className="text-3xl">Home</h1>
+      <Form method="post">
+        <button
+          type="submit"
+          className="bg-blue-500 text-white py-1 px-2 rounded"
+        >
+          Submit
+        </button>
+      </Form>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
     </div>
   );
 }

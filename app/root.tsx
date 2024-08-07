@@ -4,8 +4,19 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  json,
+  useLoaderData,
 } from "@remix-run/react";
+import { LoaderFunctionArgs } from "@remix-run/node";
+import { useEffect } from "react";
+import { getToast } from "~/toast.server";
 import "./tailwind.css";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { toast, headers } = await getToast(request);
+
+  return json({ toast }, { headers });
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,5 +37,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const { toast } = useLoaderData<typeof loader>();
+
+  useEffect(() => {
+    if (toast) alert(toast?.message);
+  }, [toast]);
+
   return <Outlet />;
 }
